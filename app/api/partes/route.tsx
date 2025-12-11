@@ -14,17 +14,16 @@ import { Parte, Semana } from "@prisma/client"
 
 const sortPartes = (partes: Partes[]) => {
     partes.sort((a, b) => {
-        // Divide a string "MM/YYYY" em semana e ano para 'a'
+        
         const [semanaA, anoA] = a.semana.split("/").map(Number);
-        // Divide a string "MM/YYYY" em semana e ano para 'b'
+        
         const [semanaB, anoB] = b.semana.split("/").map(Number);
-
-        // Primeiro, compare os anos
+        
         if (anoA !== anoB) {
-            return anoA - anoB; // Se os anos forem diferentes, ordene pelo ano
+            return anoA - anoB;
         } else {
-            // Se os anos forem iguais, compare as semanas
-            return semanaA - semanaB; // Se os anos forem iguais, ordene pela semana
+            
+            return semanaA - semanaB;
         }
     })
 }
@@ -240,6 +239,12 @@ async function scrapePartes(data: Date,numeroSemana: number, diaReuniao: string)
 
     $(".du-color--maroon-600:contains(.)").each(function () {
         const vida = $(this).text()
+
+        const firstChar = vida.charAt(0)
+        if (parseInt(firstChar).toString() === "NaN") {
+            return
+        }
+        
         partes.vida.push({
             nome: vida.length > 62 ? `${vida.slice(0, 62)}...` : vida,
             tempo: "",
