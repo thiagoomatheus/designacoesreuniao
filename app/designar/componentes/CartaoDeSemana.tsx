@@ -47,17 +47,12 @@ export default function CartaoDeSemana({dados, children, visualizacao, handlePro
             className="flex flex-col gap-3"
             action={(formData: FormData) => {
                 const result = adicionandoDesignacoes(formData, dados)
-<<<<<<< HEAD
                 if (result !== true || !handleProximo) {
                     toast.error("Erro ao adicionar designações. Reinicie o processo!")
                     return
                 }
                 
                 handleProximo?.()
-=======
-                if (result !== true || !handleProximo) return toast.error("Erro ao adicionar designações. Reinicie o processo!")
-                handleProximo()
->>>>>>> 6ee3cb017fe46c964d3a22cf26aedeab7cc64dbb
             }}
         >
             <table className="w-full border-2 min-w-[781px] print:min-w-0" >
