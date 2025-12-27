@@ -33,7 +33,8 @@ export default function FormularioFeedback( { usuario }: { usuario:Usuario | nul
         })
 
         if (!validacao.success) {
-            return toast.error(validacao.error.message, { id: toastId })
+            toast.error(validacao.error.message, { id: toastId })
+            return
         }
 
         const resultado = await fetch("/api/feedback", {
@@ -53,11 +54,12 @@ export default function FormularioFeedback( { usuario }: { usuario:Usuario | nul
         const resposta = await resultado.json()
 
         if (resposta.error) {
-            return toast.error(resposta.error, { id: toastId })
+            toast.error(resposta.error, { id: toastId })
+            return
         }
 
-        return toast.success(resposta.data, { id: toastId })
-
+        toast.success(resposta.data, { id: toastId })
+        return
     }
 
     return (

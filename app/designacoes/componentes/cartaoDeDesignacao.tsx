@@ -116,14 +116,26 @@ export default function CartaoDeDesignacao( { designacao, excluir, autorizadoPar
                             const toastId = toast.success("Escolha os parâmetros da mensagem")
 
                             const telefoneBruto = dados.get("telefone") as string
-                            if (!telefoneBruto) return toast.error("Digite um telefone", { id: toastId })
+                            if (!telefoneBruto) {
+                                toast.error("Digite um telefone", { id: toastId })
+                                return
+                            }
+
                             const telefone = telefoneBruto.startsWith("+55") ? telefoneBruto.slice(3).trim().replace(/[^0-9]/g, "") : telefoneBruto.trim().replace(/[^0-9]/g, "")
+
                             const regexPhone: RegExp = /^([14689][0-9]|2[12478]|3([1-5]|[7-8])|5([13-5])|7[193-7])9[0-9]{8}$/
-                            if (!telefone || !regexPhone.test(telefone)) return toast.error("Telefone inválido", { id: toastId })
+
+                            if (!telefone || !regexPhone.test(telefone)) {
+                                toast.error("Telefone inválido", { id: toastId })
+                                return
+                            }
                             
                             const momentoDaNotificacao = dados.get("momento_da_notificacao") as "agora" | "semana"
-                            if (!momentoDaNotificacao) return toast.error("Selecione quando irá notificar", { id: toastId })
-                            
+                            if (!momentoDaNotificacao) {
+                                toast.error("Selecione quando irá notificar", { id: toastId })
+                                return
+                            }
+
                             dispatch({
                                 type: "adicionandoTelefoneEMomentoDaNotificacao",
                                 telefone: telefone,
@@ -197,7 +209,10 @@ export default function CartaoDeDesignacao( { designacao, excluir, autorizadoPar
                         action={async () => {
                             const toastId = toast.success("Notificando ...")
                             const resultado = await notificarParticipante(dadosDesignacao.id, parametros)
-                            if (resultado.error) return toast.error(resultado.error.message, { id: toastId })
+                            if (resultado.error) {
+                                toast.error(resultado.error.message, { id: toastId })
+                                return
+                            }
                             setDadosDesignacao({
                                 ...dadosDesignacao,
                                 telefone: parametros.momentoDaNotificacao === "semana" ? parametros.telefone : null,

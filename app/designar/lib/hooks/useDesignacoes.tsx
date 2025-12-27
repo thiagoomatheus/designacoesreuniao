@@ -21,9 +21,16 @@ export default function useDesignacaoes() {
         const layoutSchema = z.string().refine((value) => value === "unico" ||value === "quinzenal" || value === "mensal_padrao", {
             message: "Selecione um layout"
         })
+
         const layout = formData.get("layout") as "unico" | "quinzenal" | "mensal_padrao"
+
         const result = layoutSchema.safeParse(layout)
-        if (!result.success) return toast.error(result.error.message)
+
+        if (!result.success) {
+            toast.error(result.error.message)
+            return
+        }
+
         dispatch({type: "inserirLayout", layout})
         toast("Selecione a semana inicial", {icon: "📅"})
     }

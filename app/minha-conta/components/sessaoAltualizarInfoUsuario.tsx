@@ -20,7 +20,12 @@ export default function SessaoAltualizarInfoUsuario( { cong, funcao }: {
             {!cong && !funcao && (
                 <form className="flex flex-col gap-5" action={async (formData) => {
                     const res = await AlterarInfoUsuario(parseInt(formData.get("cong") as string), formData.get("funcao") as "participar" | "designar")
-                    if (res !== 201) return toast.error("Ocorreu um erro. Por favor, tente mais tarde")
+
+                    if (res !== 201) {
+                        toast.error("Ocorreu um erro. Por favor, tente mais tarde")
+                        return
+                    }
+                    
                     toast.success("Alterado com sucesso")
                     return setUpdate(false)
                 }}>
