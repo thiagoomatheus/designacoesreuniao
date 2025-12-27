@@ -8,7 +8,7 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 # Omit --production flag for TypeScript devDependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 RUN apk add --no-cache openssl
 
 COPY . .
