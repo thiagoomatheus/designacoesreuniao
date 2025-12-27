@@ -20,15 +20,17 @@ model Usuario {
 }
 
 model Semana {
-  id             String       @id @default(uuid())
-  diaReuniao     String       @map("dia_reuniao")
-  canticoInicial String       @map("cantico_inicial")
-  canticoMeio    String       @map("cantico_meio")
-  canticoFinal   String       @map("cantico_final")
-  capitulos      String
-  semana         String       @unique
-  designacao     Designacao[]
-  partes         Parte[]
+  id               String           @id @default(uuid())
+  diaReuniao       String           @map("dia_reuniao")
+  canticoInicial   String           @map("cantico_inicial")
+  canticoMeio      String           @map("cantico_meio")
+  canticoFinal     String           @map("cantico_final")
+  capitulos        String
+  semana           String           @unique
+  eventosEspeciais EventoEspecial[]
+  designacao       Designacao[]
+  partes           Parte[]
+  visitas          Visita[]
 
   @@map("semana")
 }
@@ -46,24 +48,44 @@ model Parte {
 }
 
 model Designacao {
-  id               String  @id @default(uuid())
-  semana           String
-  diaReuniao       String
-  parte            String
-  participante     String
-  cong             Int
-  criadoPor        String
-  telefone         String?
-  notificado       Boolean? @default(false)
+  id                String   @id @default(uuid())
+  semana            String
+  parte             String
+  participante      String
+  cong              Int
+  criadoPor         String
+  telefone          String?
+  diaReuniao        String
   formaDeTratamento String?
+  nome              Boolean?
   obsText           String?
-  nome Boolean?
-  tempo Boolean?
-  usuarioReference Usuario @relation(fields: [criadoPor], references: [id], onDelete: Cascade)
-  parteReference   Parte   @relation(fields: [parte], references: [id], onDelete: Cascade)
-  semanaReference  Semana  @relation(fields: [semana], references: [semana], onDelete: Cascade)
+  tempo             Boolean?
+  notificado        Boolean? @default(false)
+  usuarioReference  Usuario  @relation(fields: [criadoPor], references: [id], onDelete: Cascade)
+  parteReference    Parte    @relation(fields: [parte], references: [id], onDelete: Cascade)
+  semanaReference   Semana   @relation(fields: [semana], references: [semana], onDelete: Cascade)
 
   @@map("designacoes")
+}
+
+model Visita {
+  id        String @id @default(uuid())
+  semana    String
+  cong      Int
+  tema      String
+  semanaRef Semana @relation(fields: [semana], references: [semana], onDelete: Cascade)
+
+  @@map("visitas")
+}
+
+model EventoEspecial {
+  id        String @id @default(uuid())
+  semana    String
+  data      String
+  cong      Int
+  tema      String
+  tipo      TipoEvento
+  semanaRef Semana @relation(fields: [semana], references: [semana], onDelete: Cascade)
 }
 
 model Feedback {
@@ -86,4 +108,9 @@ enum Secao {
 enum Funcao {
   participar
   designar
+}
+
+enum TipoEvento {
+  assembleia
+  congresso
 }
