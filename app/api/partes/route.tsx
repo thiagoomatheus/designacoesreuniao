@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { Parte as ParteType, Partes } from "@/app/lib/types/types"
 import { prisma } from "@/app/lib/prisma/prisma"
-import { Parte, Semana } from "@prisma/client"
+import { Funcao, Parte, Semana, TipoEvento } from "@prisma/client"
 
 const sortPartes = (partes: Partes[]) => {
     partes.sort((a, b) => {
@@ -56,7 +56,25 @@ async function getPartes(year: number, week: number, layout: number, cong: numbe
                     parteReference: true,
                     participante: true
                 }
-            }
+            },
+            eventosEspeciais: {
+                where: {
+                    cong: cong
+                },
+                select: {
+                    data: true,
+                    tema: true,
+                    tipo: true
+                }
+            },
+            visitas: {
+                where: {
+                    cong: cong
+                },
+                select: {
+                    tema: true
+                }
+            },
         }
     })
 
@@ -66,13 +84,19 @@ async function getPartes(year: number, week: number, layout: number, cong: numbe
 
     const partes: Partes[] = []
 
-    semanaDb.map((semana: Semana & { partes: Parte[] } & { designacao: { diaReuniao: string, participante: string, parteReference: Parte }[] }) => {
+    semanaDb.map((
+        semana: Semana &
+        { partes: Parte[] } &
+        { designacao: { diaReuniao: string, participante: string, parteReference: Parte }[] } &
+        { visitas: { tema: string }[] } &
+        { eventosEspeciais: { data: string, tema: string, tipo: TipoEvento }[] }
+    ) => {
         partes.push({
             id: semana.id,
             semana: semana.semana,
             canticos: [semana.canticoInicial, semana.canticoMeio, semana.canticoFinal],
             capitulos: semana.capitulos,
-            diaReuniao: semana.designacao.length ? semana.designacao[0].diaReuniao : semana.diaReuniao,
+            diaReuniao: semana.designacao.length ? semana.designacao[0].diaReuniao || semana.diaReuniao : semana.diaReuniao,
             outros: semana.partes.filter((parte) => !parte.secao).map((parte) => ({
                 id: parte.id,
                 nome: parte.nome,
@@ -95,7 +119,9 @@ async function getPartes(year: number, week: number, layout: number, cong: numbe
                 nome: parte.nome,
                 tempo: parte.tempo!,
                 participante: semana.designacao ? semana.designacao.find((designacao) => designacao.parteReference.id === parte.id)?.participante : undefined
-            }))
+            })),
+            visita: semana.visitas.length ? (semana.visitas[0].tema || null) : null,
+            eventosEspeciais: semana.eventosEspeciais.length ? semana.eventosEspeciais[0] : null
         })
     })
 
@@ -107,7 +133,6 @@ async function getPartes(year: number, week: number, layout: number, cong: numbe
 function formataPeriodo(dia: number, mes: number, ano: number) {
 
     console.log("Recebido:" + dia, mes, ano);
-    
 
     let periodoApostilaFormatado: string = "";
     
@@ -215,6 +240,8 @@ async function scrapePartes(data: Date,numeroSemana: number, diaReuniao: string)
         ],
         ministerio: [],
         vida: [],
+        visita: null,
+        eventosEspeciais: null
     }
 
     partes.capitulos = $("#p2").text()
@@ -238,10 +265,11 @@ async function scrapePartes(data: Date,numeroSemana: number, diaReuniao: string)
     })
 
     $(".du-color--maroon-600:contains(.)").each(function () {
-        const vida = $(this).text()
+        const vida = $(this).text().trim()
 
         const firstChar = vida.charAt(0)
         if (parseInt(firstChar).toString() === "NaN") {
+            console.log('reject: ' + vida);
             return
         }
         
@@ -446,6 +474,8 @@ export async function POST(req:NextRequest) {
 
     if (!usuario) return redirect("/login")
 
+    if (!usuario.cong || usuario.funcao !== Funcao.designar) return redirect("/minha-conta")
+
     const partes: Partes[] = await req.json()
 
     const designacoesSchema = z.array(z.object({
@@ -476,7 +506,14 @@ export async function POST(req:NextRequest) {
             id: z.string(),
             nome: z.string(),
             participante: z.string()
-        }, {message: "Dados recebidos incorretos"}))
+        }, {message: "Dados recebidos incorretos"})),
+        eventosEspeciais: z.object({
+            id: z.string().optional(),
+            tema: z.string(),
+            data: z.string(),
+            tipo: z.enum(["assembleia", "congresso"])
+        }).nullable(),
+        visita: z.string().nullable()
     }))
 
     const resultZod = designacoesSchema.safeParse(partes)
@@ -497,6 +534,20 @@ export async function POST(req:NextRequest) {
             }
         })
 
+        const visita = await prisma.visita.findFirst({
+            where: {
+                semana: resultZod.data[i].semana,
+                cong: usuario.cong
+            }
+        })
+
+        const eventoEspecial = await prisma.eventoEspecial.findFirst({
+            where: {
+                semana: resultZod.data[i].semana,
+                cong: usuario.cong
+            }
+        })
+
         const temDesignacao = designacoesExistentes.length > 0
 
         if (temDesignacao) {
@@ -509,11 +560,41 @@ export async function POST(req:NextRequest) {
                             criadoPor: usuario.id
                         }
                     })
+
+                    if (!!visita) {
+                        await prisma.visita.delete({
+                            where: {
+                                id: visita.id
+                            }
+                        })
+                    }
+
+                    if (!!eventoEspecial) {
+                        await prisma.eventoEspecial.delete({
+                            where: {
+                                id: eventoEspecial.id
+                            }
+                        })
+                    }
                     continue
                 } catch (error) {
                     console.warn(error);
                     return NextResponse.json({ error: 'Erro ao atualizar designações existentes' }, { status: 401 })
                 }
+            }
+
+            if (!!resultZod.data[0].eventosEspeciais) {
+                await prisma.eventoEspecial.create({
+                    data: {
+                        cong: usuario.cong,
+                        semana: resultZod.data[i].semana,
+                        tema: resultZod.data[i].eventosEspeciais!.tema,
+                        data: resultZod.data[i].eventosEspeciais!.data,
+                        tipo: resultZod.data[i].eventosEspeciais!.tipo
+                    }
+                })
+
+                return NextResponse.json({ message: "Designações salvas com sucesso" }, { status: 200 })
             }
 
             const designacoesASalvar: ParteType[] = [...resultZod.data[i].outros, ...resultZod.data[i].tesouros, ...resultZod.data[i].ministerio, ...resultZod.data[i].vida]
@@ -540,6 +621,16 @@ export async function POST(req:NextRequest) {
                         }
                     })
                 }
+
+                if (resultZod.data[i].visita !== null) {
+                    await prisma.visita.create({
+                        data: {
+                            cong: usuario.cong,
+                            semana: resultZod.data[i].semana,
+                            tema: resultZod.data[i].visita as string
+                        }
+                    })
+                }
                 
             } catch (error) {
                 console.warn(error);
@@ -556,13 +647,13 @@ export async function POST(req:NextRequest) {
     }
     
     const designacoes: {
-    semana: string
-    parte: string
-    participante: string
-    criadoPor: string
-    cong: number
-    diaReuniao: string
-}[] = partes
+        semana: string
+        parte: string
+        participante: string
+        criadoPor: string
+        cong: number
+        diaReuniao: string
+    }[] = partes
     .filter((semana) => !semanasSalvas.includes(semana.semana))
     .flatMap((semana) => {
         const todasAsPartesDaSemana = [
@@ -582,9 +673,65 @@ export async function POST(req:NextRequest) {
         }));
     });
 
-    await prisma.designacao.createManyAndReturn({
+    await prisma.designacao.createMany({
         data: designacoes
     })
+
+    const visitas = partes
+    .filter((semana) => !semanasSalvas.includes(semana.semana))
+    .filter(semana => semana.visita !== null)
+
+    if (visitas.length > 0) {
+
+        const data = visitas.flatMap(semana => {
+            return {
+                semana: semana.semana as string,
+                cong: usuario.cong as number,
+                tema: semana.visita as string
+            }
+        })
+
+        if (visitas.length > 1) {
+            await prisma.visita.createMany({
+                data: data
+            })
+        } else {
+            await prisma.visita.create({
+                data: data[0]
+            })
+        }
+
+    }
+
+    const assembleia = partes
+    .filter((semana) => !semanasSalvas.includes(semana.semana))
+    .filter(semana => semana.eventosEspeciais !== null && semana.eventosEspeciais.tema && semana.eventosEspeciais.tipo)
+
+    if (assembleia.length > 0) {
+
+        const data = assembleia.flatMap(semana => {
+            return {
+                semana: semana.semana as string,
+                cong: usuario.cong as number,
+                tema: semana.eventosEspeciais!.tema as string,
+                data: semana.eventosEspeciais!.data!,
+                tipo: semana.eventosEspeciais!.tipo === "assembleia" ? TipoEvento.assembleia : TipoEvento.congresso
+            }
+        })
+
+        if (assembleia.length > 1) {
+            await prisma.eventoEspecial.createMany({
+                data: data
+            })
+        } else {
+            console.log(data[0]);
+            
+            await prisma.eventoEspecial.create({
+                data: data[0]
+            })
+        }
+        
+    }
 
     return NextResponse.json({ message: "Designações salvas com sucesso" }, { status: 200 })
 }

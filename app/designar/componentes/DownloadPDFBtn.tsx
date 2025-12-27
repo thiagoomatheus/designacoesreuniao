@@ -2,7 +2,7 @@
 
 import { Parte, Partes } from '@/app/lib/types/types';
 import Btn from '@/app/minha-conta/components/btn';
-import {  } from '@prisma/client';
+import { EventoEspecial } from '@prisma/client';
 import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 
 export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[] } ) {
@@ -26,7 +26,7 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
     },
   });
 
-  const TabelaDesignacoesSecao = ( { partes }: { partes: Parte[]} ) => (
+  const TabelaDesignacoesSecao = ( { partes, visita }: { partes: Parte[], visita?: string } ) => (
     <View style={{width: "100%", display: "flex", flexDirection: "row", borderBottom: "1px solid black", flexWrap: "wrap"}}>
       {partes.map((parte, index) => (
         <>
@@ -41,7 +41,7 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
             key={`parte-${index}`}
             style={{flexBasis: "65%", borderRight: "1px solid black", paddingLeft: "6px"}}
           >
-            {parte.nome?.trim()}
+            {(visita && parte.nome.includes("Estudo bíblico de congregação")) ? `${parte.nome.split(" ")[0]} ${visita}` : parte.nome?.trim()}
           </Text>
 
           <Text
@@ -56,7 +56,7 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
   )
 
   const TabelaDesignacoesCompleta = ( { designacoes }: {designacoes: Partes} ) => (
-    <View style={{ width: "100%", border: "2px solid black"}}>
+    <View style={{ width: "100%", border: "2px solid black"}} key={designacoes.diaReuniao}>
 
       <View style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", borderBottom: "1px solid black"}}>
         <Text style={{fontSize: "9pt", fontFamily: "Helvetica-Bold", flexBasis: "18%", backgroundColor: "#d9d9d9", paddingLeft: "6px"}}>
@@ -106,7 +106,7 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
         </Text>
       </View>
 
-      <TabelaDesignacoesSecao partes={designacoes.vida} />
+      <TabelaDesignacoesSecao partes={designacoes.vida} visita={designacoes.visita || undefined} />
 
       <View style={{width: "100%", display: "flex", flexDirection: "row", borderBottom: "1px solid black", justifyContent: "flex-end"}}>
         <Text style={{flexBasis: "12%", borderRight: "1px solid black", borderLeft: "1px solid black", paddingLeft: "6px"}}>
@@ -133,6 +133,45 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
       </View>
     </View>
   )
+
+  const EventoEspecial = (eventoEspecial: Partial<EventoEspecial>) => {
+    
+    const gap = eventoEspecial.tema!.length > 40 ? "20px" : "40px";
+
+    return (
+      <View
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-around",
+          gap: gap,
+          width: "100%",
+          marginBottom: "10px",
+          padding: "10px",
+          border: "2px solid black",
+          backgroundColor: "#f3f4f6"
+        }}
+        key={eventoEspecial.data}
+      >
+        <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold" }}>
+          {eventoEspecial.tipo === "congresso" ? "Congresso Regional" : "Assembleia de Circuito"} ({eventoEspecial.data})
+        </Text>
+        <Text style={{ fontSize: 24, lineHeight: "24pt", fontFamily: "Helvetica-Oblique", textAlign: "center" }}>
+          "{eventoEspecial.tema}"
+        </Text>
+        <View style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "5px"
+        }}>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica" }}>Não haverá reunião no meio de semana por conta {`${eventoEspecial.tipo === "congresso" ? "do congresso" : "da assembleia"}`}.</Text>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica" }}>Considere a matéria pessoalmente ou com sua família.</Text>
+        </View>
+      </View>
+  )}
     
   const MyDocument = () => (
     <Document>
@@ -142,7 +181,13 @@ export default function DownloadPDFBtn( { designacoes }: { designacoes: Partes[]
         </View>
         <View style={{ width: "100%", marginTop: 10, lineHeight: "11pt", display: "flex", flexDirection: "column", gap: "10px"}}>
           {designacoes.map((designacao) => (
-            <TabelaDesignacoesCompleta designacoes={designacao} key={designacao.id} />
+            <>
+              {designacao.eventosEspeciais ? (
+                <EventoEspecial {...designacao.eventosEspeciais} key={`designacoes_${designacao.semana}`} />
+              ) : (
+                <TabelaDesignacoesCompleta designacoes={designacao} key={`designacoes_${designacao.semana}`} />
+              )}
+            </>
           ))}
         </View>
       </Page>

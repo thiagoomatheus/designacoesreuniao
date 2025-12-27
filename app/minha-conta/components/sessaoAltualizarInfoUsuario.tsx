@@ -32,8 +32,8 @@ export default function SessaoAltualizarInfoUsuario( { cong, funcao }: {
                     <p>Por favor, selecione sua função.</p>
                     <label className="flex flex-col gap-3">
                         Minha função:
-                        <select name="funcao">
-                            <option disabled selected>Selecione uma função</option>
+                        <select name="funcao" defaultValue="default" required>
+                            <option disabled value='default'>Selecione uma função</option>
                             <option value="participar">Participar</option>
                             <option value="designar">Designar</option>
                         </select>

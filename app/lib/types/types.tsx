@@ -1,3 +1,5 @@
+import { EventoEspecial } from "@prisma/client"
+
 export type Partes = {
   id?: string
   semana: string
@@ -8,6 +10,8 @@ export type Partes = {
   tesouros: Parte[]
   ministerio: Parte[]
   vida: Parte[]
+  visita: string | null
+  eventosEspeciais: Partial<EventoEspecial> | null
 }
 
 export type Parte = {
