@@ -5,6 +5,7 @@ import toast from "react-hot-toast"
 import { z } from "zod"
 import { Partes } from "../../../lib/types/types"
 import { DesignarContext, DesignarDispatch } from "../contexts/DesignarContext"
+import { TipoEvento } from "@prisma/client"
 
 export default function useDesignacaoes() {
 
@@ -46,31 +47,41 @@ export default function useDesignacaoes() {
         
         const designacoes: Partes = {
             ...data,
-            diaReuniao: formData.get("data_reuniao") as string,
+            diaReuniao: formData.get("data_reuniao") as string || "",
             tesouros: data.tesouros.map((parte) => {
                 return {
                     ...parte,
-                    participante: formData.get(parte.nome[0]) as string
+                    participante: formData.get(parte.nome[0]) as string || ""
                 }
             }),
             ministerio: data.ministerio.map((parte) => {
                 return {
                     ...parte,
-                    participante: formData.get(parte.nome[0]) as string
+                    participante: formData.get(parte.nome[0]) as string || ""
                 }
             }),
             vida: data.vida.map(parte => {
                 return {
                     ...parte,
-                    participante: formData.get(parte.nome[0]) as string
+                    participante: formData.get(parte.nome[0]) as string || ""
                 }
             }),
             outros: data.outros.map(parte => {
                 return {
                     ...parte,
-                    participante: formData.get(parte.nome.toLowerCase().replaceAll(" ", "_").replaceAll("çã", "ca")) as string
+                    participante: formData.get(parte.nome.toLowerCase().replaceAll(" ", "_").replaceAll("çã", "ca")) as string || ""
                 }
-            })
+            }),
+            visita: formData.get("visita") as string || null,
+            eventosEspeciais: {
+                data: formData.get("data_evento_especial") as string || undefined,
+                tipo: formData.get("tipo_evento_especial") as TipoEvento || null,
+                tema: formData.get("tema_evento_especial") as string || undefined,
+            }
+        }
+        
+        if (!designacoes.eventosEspeciais?.data || !designacoes.eventosEspeciais?.tipo || !designacoes.eventosEspeciais?.tema) {
+            designacoes.eventosEspeciais = null
         }
 
         const designacoesSchema = z.object({
@@ -101,14 +112,20 @@ export default function useDesignacaoes() {
                 id: z.string(),
                 nome: z.string(),
                 participante: z.string()
-            }, {message: "Dados recebidos incorretos"}))
+            }, {message: "Dados recebidos incorretos"})),
+            visita: z.string().nullable(),
+            eventosEspeciais: z.object({
+                data: z.string(),
+                tipo: z.enum([ "assembleia", "congresso" ]),
+                tema: z.string()
+            }).nullable()
         })
 
         const resultZod = designacoesSchema.safeParse(designacoes)
 
         if (!resultZod.success) return toast.error(resultZod.error.message)
             
-        dispatch({type: "adicionandoDesignacoes", id: resultZod.data.id, designacoes})
+        dispatch({type: "adicionandoDesignacoes", id: resultZod.data.id, designacoes: resultZod.data})
 
         return true
     }

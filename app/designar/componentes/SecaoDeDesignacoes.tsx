@@ -22,24 +22,55 @@ export default function SecaoDeDesignacoes() {
     
     const dados = semanas[semana-1]
 
+    const [eventosEspeciais, setEventosEspeciais] = useState<boolean>(dados ? !!dados.eventosEspeciais?.tema : false)
+    const [visita, setVisita] = useState<boolean>(dados ? !!dados.visita : false)
+
+    console.log(dados);
+
     return (
         <div className="flex flex-col gap-5 print:gap-[10px] overflow-auto pb-3 md:pb-0 impressao">
             {semana <= semanas.length && (
                 <>
                     <div className="flex flex-row items-center justify-between">
-                        <h3>Semana {semana} / {semanas.length}</h3>
-                        {(dados.outros.find((parte) => parte.participante) || dados.tesouros.find((parte) => parte.participante) || dados.ministerio.find((parte) => parte.participante)) && <Badge variant="warning">Semana contém designações</Badge>}
+                        <div className="flex flex-row items-center gap-10">
+                            <h3>Semana {semana} / {semanas.length}</h3>
+                            {(dados.outros.find((parte) => parte.participante) || dados.tesouros.find((parte) => parte.participante) || dados.ministerio.find((parte) => parte.participante)) && <Badge variant="warning">Semana contém designações</Badge>}
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                            <label className="flex items-center gap-4">
+                                <span>Evento Especial</span>
+                                <input
+                                    type="checkbox"
+                                    name="assembleia"
+                                    checked={eventosEspeciais ? true : false}
+                                    onChange={(e) => setEventosEspeciais(e.target.checked)}
+                                />
+                            </label>
+                            <label className="flex items-center gap-4">
+                                <span>Visita</span>
+                                <input
+                                    type="checkbox"
+                                    name="visita"
+                                    checked={visita ? true : false}
+                                    onChange={(e) => setVisita(e.target.checked)}
+                                />
+                            </label>
+                        </div>
                     </div>
                     <CartaoDeSemana
                         key={semanas[semana-1].semana}
-                        data={dados}
+                        dados={dados}
                         visualizacao={false}
                         handleProximo={() => {
                             setSemana(semana + 1)
                             if (semana === semanas.length) {
                                 return toast.success("Salve suas designações para poder notificar os participantes ou faça o download do PDF.")
                             }
+                            setEventosEspeciais(false)
+                            setVisita(false)
                         }}
+                        eventosEspeciais={eventosEspeciais}
+                        visita={visita}
                     >
                         <div className={`flex flex-row gap-5 ${semana === 1 ? "justify-end" : "justify-between"} items-center w-full`}>
                             {semana > 1 && <Btn onClick={() => setSemana(semana - 1)}>Anterior</Btn>}
@@ -62,8 +93,10 @@ export default function SecaoDeDesignacoes() {
                     {semanas.map((semana) => (
                         <CartaoDeSemana
                             key={semana.semana}
-                            data={semana}
+                            dados={semana}
                             visualizacao={true}
+                            eventosEspeciais={!!semana.eventosEspeciais?.tema}
+                            visita={!!semana.visita}
                         />
                     ))}
                     <div className="flex flex-row gap-5 justify-end print:hidden">
