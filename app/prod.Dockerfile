@@ -51,13 +51,20 @@ WORKDIR /app_prod
 
 ENV NODE_ENV=production
 
-RUN npm install -g tsx
+RUN npm install -g tsx prisma@5.21.1
 RUN apk add --no-cache openssl
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+RUN chown -R nextjs:nodejs /app_prod
+
 USER nextjs
+
+COPY --chown=nextjs:nodejs package.json package-lock.json* ./
+
+RUN npm install tsx prisma@5.21.1 --legacy-peer-deps --save-exact
 
 COPY --from=builder /app/public ./public
 
