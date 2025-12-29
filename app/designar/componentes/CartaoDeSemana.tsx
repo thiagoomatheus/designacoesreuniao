@@ -315,7 +315,7 @@ export default function CartaoDeSemana({dados, children, visualizacao, handlePro
                                                 <Textarea
                                                     required
                                                     key={`participante-${index}`}
-                                                    name={parte.nome[0]}
+                                                    name={!parte.nome[0].includes("1") ? parte.nome[0] : parte.nome.slice(0, 2)}
                                                     defaultValue={parte.participante}
                                                 /> :
                                                 parte.participante

@@ -70,7 +70,7 @@ export default function useDesignacaoes() {
             vida: data.vida.map(parte => {
                 return {
                     ...parte,
-                    participante: formData.get(parte.nome[0]) as string || ""
+                    participante: formData.get(!parte.nome[0].includes("1") ? parte.nome[0] : parte.nome.slice(0, 2)) as string || ""
                 }
             }),
             outros: data.outros.map(parte => {
