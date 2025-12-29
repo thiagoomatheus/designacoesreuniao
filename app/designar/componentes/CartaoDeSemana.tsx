@@ -81,6 +81,7 @@ export default function CartaoDeSemana({dados, children, visualizacao, handlePro
                                         <select
                                             name="data_evento_especial"
                                             className="w-60"
+                                            defaultValue={dados.eventosEspeciais?.data || (tipoEvento === "assembleia" ? dataSabado : diasCongresso)}
                                             required
                                         >
                                             {tipoEvento === "assembleia" ? (

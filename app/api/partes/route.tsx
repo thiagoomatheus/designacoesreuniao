@@ -594,7 +594,9 @@ export async function POST(req:NextRequest) {
                     }
                 })
 
-                return NextResponse.json({ message: "Designações salvas com sucesso" }, { status: 200 })
+                semanasSalvas.push(resultZod.data[i].semana)
+
+                continue
             }
 
             const designacoesASalvar: ParteType[] = [...resultZod.data[i].outros, ...resultZod.data[i].tesouros, ...resultZod.data[i].ministerio, ...resultZod.data[i].vida]
@@ -654,7 +656,7 @@ export async function POST(req:NextRequest) {
         cong: number
         diaReuniao: string
     }[] = partes
-    .filter((semana) => !semanasSalvas.includes(semana.semana))
+    .filter((semana) => !semanasSalvas.includes(semana.semana) && semana.eventosEspeciais === null)
     .flatMap((semana) => {
         const todasAsPartesDaSemana = [
             ...semana.outros,
@@ -724,8 +726,6 @@ export async function POST(req:NextRequest) {
                 data: data
             })
         } else {
-            console.log(data[0]);
-            
             await prisma.eventoEspecial.create({
                 data: data[0]
             })

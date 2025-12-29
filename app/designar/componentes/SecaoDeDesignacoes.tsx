@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { DesignarContext } from "../lib/contexts/DesignarContext"
 import CartaoDeSemana from "./CartaoDeSemana"
 import Btn from "@/app/minha-conta/components/btn"
@@ -25,8 +25,11 @@ export default function SecaoDeDesignacoes() {
     const [eventosEspeciais, setEventosEspeciais] = useState<boolean>(dados ? !!dados.eventosEspeciais?.tema : false)
     const [visita, setVisita] = useState<boolean>(dados ? !!dados.visita : false)
 
-    console.log(dados);
-
+    useEffect(() => {
+        setEventosEspeciais(dados ? !!dados.eventosEspeciais?.tema : false)
+        setVisita(dados ? !!dados.visita : false)
+    }, [dados])
+    
     return (
         <div className="flex flex-col gap-5 print:gap-[10px] overflow-auto pb-3 md:pb-0 impressao">
             {semana <= semanas.length && (
