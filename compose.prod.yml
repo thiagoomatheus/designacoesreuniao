@@ -2,7 +2,7 @@ services:
   mongodb:
     container_name: mongodb
     image: mongo
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - 27017:27017
     environment:
@@ -13,6 +13,12 @@ services:
     volumes:
       - evolution_mongodb_data:/data/db
       - evolution_mongodb_configdb:/data/configdb
+    mem_limit: 1.5g
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     expose:
       - 27017
     networks:
@@ -20,23 +26,31 @@ services:
 
   redis:
     container_name: redis
-    image: redis:latest
-    restart: on-failure
+    image: redis:7.2.12
+    restart: unless-stopped
     ports:
       - 6380:6379
     command: >
       redis-server
       --port 6379
       --appendonly yes
+      -- maxmemory 256mb
+      -- maxmemory-policy allkeys-lru
     volumes:
       - evolution_redis:/data
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       - coolify
 
   evolution-api:
     container_name: evolution_api-prod
     image: atendai/evolution-api:v1.8.0
-    restart: always
+    restart: unless-stopped
     environment:
       - LOG_LEVEL=${LOG_LEVEL}
       - SERVER_URL=${SERVER_URL}
@@ -67,10 +81,18 @@ services:
       - CACHE_REDIS_TTL=604800
       - CONFIG_SESSION_PHONE_VERSION=${BAILEYS_VERSION}
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8081:8080"
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - evolution_instances:/evolution/instances
       - evolution_store:/evolution/store
@@ -97,7 +119,9 @@ services:
         - AUTH_REDIRECT_PROXY_URL=${AUTH_REDIRECT_PROXY_URL}
         - AUTHENTICATION_API_KEY=${AUTHENTICATION_API_KEY}
         - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-    restart: always
+    restart: unless-stopped
+    environment:
+      NODE_OPTIONS: --max-old-space-size=512
     volumes:
       - nextjs_cache:/app/.next
       - .:/app
@@ -105,7 +129,14 @@ services:
     ports:
       - 3000:3000
     depends_on:
-      - evolution-api
+      evolution-api:
+        condition: service_healthy
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - coolify
 
