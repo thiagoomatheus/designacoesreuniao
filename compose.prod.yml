@@ -32,15 +32,14 @@ services:
       - 6380:6379
     command: >
       redis-server
-      --port 6379
       --appendonly yes
       -- maxmemory 256mb
       -- maxmemory-policy allkeys-lru
     volumes:
       - evolution_redis:/data
-    mem_limit: 512m
+    mem_limit: 256m
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6379", "ping"]
       interval: 30s
       timeout: 5s
       retries: 3
