@@ -142,7 +142,6 @@ volumes:
   nextjs_cache:
   evolution_store:
   evolution_instances:
-  evolution_redis:
   prisma_volume:
   evolution_mongodb_data:
   evolution_mongodb_configdb:
