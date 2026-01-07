@@ -87,6 +87,11 @@ services:
     ports:
       - "8081:8080"
     mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     volumes:
       - evolution_instances:/evolution/instances
       - evolution_store:/evolution/store
@@ -124,7 +129,8 @@ services:
     ports:
       - 3000:3000
     depends_on:
-      - evolution-api
+      evolution-api:
+        condition: service_healthy
     mem_limit: 768m
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
