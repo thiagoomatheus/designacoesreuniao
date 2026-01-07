@@ -32,10 +32,11 @@ services:
       - 6380:6379
     command: >
       redis-server
+      --save ""
       --appendonly yes
-      -- maxmemory 256mb
-      -- maxmemory-policy allkeys-lru
-    mem_limit: 256m
+      --maxmemory 384mb
+      --maxmemory-policy allkeys-lru
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "127.0.0.1", "-p", "6379", "ping"]
       interval: 30s
@@ -91,6 +92,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
     volumes:
       - evolution_instances:/evolution/instances
       - evolution_store:/evolution/store
