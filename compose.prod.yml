@@ -114,6 +114,9 @@ services:
         - AUTHENTICATION_API_KEY=${AUTHENTICATION_API_KEY}
         - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     restart: unless-stopped
+    environment:
+      NODE_OPTIONS: --max-old-space-size=512
+      HOSTNAME: 0.0.0.0
     volumes:
       - nextjs_cache:/app/.next
       - .:/app
@@ -124,7 +127,7 @@ services:
       - evolution-api
     mem_limit: 768m
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://next-app:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
