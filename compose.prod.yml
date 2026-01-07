@@ -124,12 +124,10 @@ services:
       - evolution-api
     mem_limit: 768m
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-f", "http://next-app:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
-    expose:
-      - 3000
     networks:
       - coolify
 
