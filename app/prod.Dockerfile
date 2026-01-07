@@ -52,7 +52,7 @@ WORKDIR /app_prod
 ENV NODE_ENV=production
 
 RUN npm install -g tsx prisma@5.21.1
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl curl
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs

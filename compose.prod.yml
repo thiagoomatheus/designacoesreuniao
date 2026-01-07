@@ -114,8 +114,6 @@ services:
         - AUTHENTICATION_API_KEY=${AUTHENTICATION_API_KEY}
         - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     restart: unless-stopped
-    environment:
-      NODE_OPTIONS: --max-old-space-size=512
     volumes:
       - nextjs_cache:/app/.next
       - .:/app
