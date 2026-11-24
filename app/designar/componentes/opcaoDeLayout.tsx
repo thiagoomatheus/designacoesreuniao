@@ -1,4 +1,4 @@
-export default function Layout( { quantidadeDeSemanas }: {quantidadeDeSemanas: number}) {
+export default function OpcaoDeLayout( { quantidadeDeSemanas }: {quantidadeDeSemanas: number}) {
     return (
         <label className="flex flex-col justify-start items-center cursor-pointer gap-5">
             <p className="font-bold">{quantidadeDeSemanas === 1 ? 'Único' : quantidadeDeSemanas === 2 ? 'Quinzenal' : 'Mensal'}</p>

@@ -7,7 +7,7 @@ import SectionTitle from "./sectionTitle"
 import { Calendar } from "./calendar";
 import Instrucoes from "../../componentes/instrucoes";
 import toast from "react-hot-toast";
-import Layout from "./layout";
+import OpcaoDeLayout from "./opcaoDeLayout";
 import { DesignarContext } from "../lib/contexts/DesignarContext";
 import SecaoDeDesignacoes from "./SecaoDeDesignacoes";
 
@@ -49,9 +49,9 @@ export default function Formulario() {
                             Selecione o layout que deseja:
                         </p>
                         <div className="flex flex-col md:flex-row gap-5">
-                            <Layout quantidadeDeSemanas={1} />
-                            <Layout quantidadeDeSemanas={2} />
-                            <Layout quantidadeDeSemanas={4} />
+                            <OpcaoDeLayout quantidadeDeSemanas={1} />
+                            <OpcaoDeLayout quantidadeDeSemanas={2} />
+                            <OpcaoDeLayout quantidadeDeSemanas={4} />
                         </div>
                         <button
                             className="bg-yellow-400 px-3 py-2 rounded-lg text-white dark:text-gray-900 shadow-lg w-fit font-bold self-end hover:bg-yellow-500"
