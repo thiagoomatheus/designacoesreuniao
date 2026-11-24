@@ -3,42 +3,21 @@
 import { auth } from "@/app/lib/auth/auth"
 import axios from "axios"
 import * as cheerio from "cheerio"
-import { add, endOfWeek, format, getWeek, isSameMonth, isSameYear, startOfWeek } from "date-fns"
+import { add, endOfWeek, format, isSameMonth, isSameYear, startOfWeek } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { redirect } from "next/navigation"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { comparaChavesSemana, getChaveSemana } from "@/app/lib/semana"
 import { Parte as ParteType, Partes } from "@/app/lib/types/types"
 import { prisma } from "@/app/lib/prisma/prisma"
 import { Funcao, Parte, Semana, TipoEvento } from "@prisma/client"
 
 const sortPartes = (partes: Partes[]) => {
-    partes.sort((a, b) => {
-        
-        const [semanaA, anoA] = a.semana.split("/").map(Number);
-        
-        const [semanaB, anoB] = b.semana.split("/").map(Number);
-        
-        if (anoA !== anoB) {
-            return anoA - anoB;
-        } else {
-            
-            return semanaA - semanaB;
-        }
-    })
+    partes.sort((a, b) => comparaChavesSemana(a.semana, b.semana))
 }
 
-async function getPartes(year: number, week: number, layout: number, cong: number) {
-    const semanas: string[] = []
-
-    for (let i = 0; i < layout; i++) {
-        if (week + i > 52) {
-            semanas.push(`${(week + i) - 52}/${year + 1}`)
-            continue
-        }
-        semanas.push(`${week + i}/${year}`)
-    }
-
+async function getPartes(semanas: string[], cong: number) {
     const semanaDb = await prisma.semana.findMany({
         where: {
             semana: {
@@ -207,7 +186,7 @@ function formataPeriodo(dia: number, mes: number, ano: number) {
     return periodoApostilaFormatado;
 }
 
-async function scrapePartes(data: Date,numeroSemana: number, diaReuniao: string) {
+async function scrapePartes(data: Date, semana: string, diaReuniao: string) {
 
     const dia = data.getDate();
     const mes = data.getMonth();
@@ -225,7 +204,7 @@ async function scrapePartes(data: Date,numeroSemana: number, diaReuniao: string)
     const partes: Partes = {
         canticos: [],
         capitulos: "",
-        semana: `${numeroSemana}/${periodo.slice(-4)}`,
+        semana: semana,
         diaReuniao: diaReuniao,
         outros: [
             {nome: "Presidente", participante: ""},
@@ -426,13 +405,13 @@ export async function GET(req:NextRequest) {
 
     try {
 
-        const week = getWeek(new Date(year, (month - 1), day), { weekStartsOn: 1 })
+        const dataBase = new Date(year, (month - 1), day)
+        const chaves = Array.from({ length: layout }, (_, i) => getChaveSemana(add(dataBase, { days: 7 * i })))
 
-        const result = await getPartes(week !== 1 ? year : month !== 12 ? year : year + 1, week, layout, usuario.cong)
+        const result = await getPartes(chaves, usuario.cong)
 
         if (result !== false && result.length === layout) return NextResponse.json({ partes: result }, { status: 200 })
 
-        const dataBase = new Date(year, (month - 1), day)
         const partes: Partes[] = []
         const semanasDb: string[] = []
 
@@ -444,14 +423,9 @@ export async function GET(req:NextRequest) {
         }
         
         for (let i = 0; i < layout; i++) {
-            let data = add(dataBase, { days: 7 * i })
-            let ano = data.getFullYear()
-            const numeroSemana = getWeek(data, { weekStartsOn: 1 })
-            if (numeroSemana === 1 && data.getMonth() === 11) {
-                ano++
-            }
-            if (!semanasDb.includes(`${numeroSemana}/${ano}`)) {
-                partes.push(await scrapePartes(data, numeroSemana, format(data, "dd 'de' MMMM", { locale: ptBR })))
+            const data = add(dataBase, { days: 7 * i })
+            if (!semanasDb.includes(chaves[i])) {
+                partes.push(await scrapePartes(data, chaves[i], format(data, "dd 'de' MMMM", { locale: ptBR })))
             }
         }
 

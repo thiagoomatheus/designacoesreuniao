@@ -1,20 +1,16 @@
 
-import { getWeek, getYear } from 'date-fns'
+import { getChaveSemana } from '../semana'
 import { prisma } from './prisma'
 
 async function enviarNotificacaoAgendada() {
 
-    const hoje = new Date()
+    const chaveSemanaAtual = getChaveSemana(new Date())
 
-    const semanaAtual = getWeek(hoje, { weekStartsOn: 1 })
-
-    const ano = getYear(hoje)
-
-    console.log(`Enviando notificação para semana ${semanaAtual}/${ano}`)
+    console.log(`Enviando notificação para semana ${chaveSemanaAtual}`)
     
     const designacoesParaNotificar = await prisma.designacao.findMany({
         where: {
-            semana: `${semanaAtual}/${ano}`,
+            semana: chaveSemanaAtual,
             telefone: {
                 not: null
             }

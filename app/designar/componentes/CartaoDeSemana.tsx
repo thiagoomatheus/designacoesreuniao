@@ -7,7 +7,8 @@ import { Partes } from "@/app/lib/types/types";
 import Link from "next/link";
 import { Tooltip } from "@/app/componentes/Tooltip";
 import useForm from "../lib/hooks/useDesignacoes";
-import { format, nextFriday, nextSaturday, nextSunday, setISOWeek, startOfISOWeek } from "date-fns";
+import { format, nextFriday, nextSaturday, nextSunday } from "date-fns";
+import { inicioDaSemana } from "@/app/lib/semana";
 import { useState } from "react";
 import { TipoEvento } from "@prisma/client";
 
@@ -24,18 +25,7 @@ export default function CartaoDeSemana({dados, children, visualizacao, handlePro
 
     const [tipoEvento, setTipoEvento] = useState<TipoEvento>(dados.eventosEspeciais?.tipo || "assembleia")
 
-    const buscaSegundaFeira = () => {
-        const semana = parseInt(dados.semana.split("/")[0])
-        const ano = parseInt(dados.semana.split("/")[1])
-
-        let data = new Date(ano, 0, 1)
-
-        data = setISOWeek(data, semana)
-
-        return startOfISOWeek(data)
-    }
-
-    const dataSegundaFeira = buscaSegundaFeira()
+    const dataSegundaFeira = inicioDaSemana(dados.semana)
 
     const dataSextaFeira = format(nextFriday(dataSegundaFeira), 'dd/MM');
     const dataSabado = format(nextSaturday(dataSegundaFeira), 'dd/MM');

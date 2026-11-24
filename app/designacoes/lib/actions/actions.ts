@@ -2,8 +2,8 @@
 
 import { auth } from "@/app/lib/auth/auth"
 import { prisma } from "@/app/lib/prisma/prisma"
+import { comparaChavesSemana, getChaveSemana } from "@/app/lib/semana"
 import { Contato } from "@/app/lib/types/types"
-import { getWeek } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { z } from "zod"
@@ -166,14 +166,14 @@ export async function notificarParticipante(designacaoId: string, parametrosDaMe
 
     if (parametrosDaMensagem.momentoDaNotificacao === "semana") {
 
-        const hoje = new Date()
+        const comparacao = comparaChavesSemana(getChaveSemana(new Date()), designacao.semana)
 
-        if (getWeek(hoje, { weekStartsOn: 1}) === parseInt(designacao.semana.slice(0, 2))) return { error: {
+        if (comparacao === 0) return { error: {
             code: 400,
             message: "A semana selecionada é a atual. Não é possível agendar a notificação para esta semana."
         }}
 
-        if (getWeek(hoje, { weekStartsOn: 1}) > parseInt(designacao.semana.slice(0, 2))) return { error: {
+        if (comparacao > 0) return { error: {
             code: 400,
             message: "A semana selecionada já passou. Não é possível agendar a notificação para esta semana."
         }}

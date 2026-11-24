@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "tsc": "tsc",
-    "notificar:prod": "npx tsx ./notificacao/index.ts",
+    "notificar:prod": "npx tsx ./app/lib/notificacao/index.ts",
+    "corrigir:semanas": "npx tsx ./scripts/corrigir-semanas.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
